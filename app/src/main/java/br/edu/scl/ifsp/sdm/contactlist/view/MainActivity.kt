@@ -12,15 +12,17 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.recyclerview.widget.LinearLayoutManager
 import br.edu.scl.ifsp.sdm.contactlist.R
 import br.edu.scl.ifsp.sdm.contactlist.R.menu.context_menu_main
 import br.edu.scl.ifsp.sdm.contactlist.adapter.ContactAdapter
+import br.edu.scl.ifsp.sdm.contactlist.adapter.ContactRvAdapter
 import br.edu.scl.ifsp.sdm.contactlist.databinding.ActivityMainBinding
 import br.edu.scl.ifsp.sdm.contactlist.model.Constant.EXTRA_CONTACT
 import br.edu.scl.ifsp.sdm.contactlist.model.Constant.EXTRA_VIEW_CONTACT
 import br.edu.scl.ifsp.sdm.contactlist.model.Contact
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), OnContactClickListener {
     private val amb: ActivityMainBinding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
@@ -29,8 +31,8 @@ class MainActivity : AppCompatActivity() {
     private val contactList: MutableList<Contact> = mutableListOf()
 
     // Adapter
-    private val contactAdapter: ContactAdapter by lazy {
-        ContactAdapter(this, contactList)
+    private val contactAdapter: ContactRvAdapter by lazy {
+        ContactRvAdapter(contactList, this)
     }
 
     private lateinit var carl: ActivityResultLauncher<Intent>
@@ -59,15 +61,9 @@ class MainActivity : AppCompatActivity() {
 
                 fillContacts()
 
-                amb.contactsLv.adapter = contactAdapter
-                registerForContextMenu(amb.contactsLv)
+                amb.contactsRv.adapter = contactAdapter
+                amb.contactsRv.layoutManager = LinearLayoutManager(this)
 
-                amb.contactsLv.setOnItemClickListener { _, _, position, _   ->
-                    startActivity(Intent(this, ContactActivity::class.java).apply {
-                        putExtra(EXTRA_CONTACT, contactList[position])
-                        putExtra(EXTRA_VIEW_CONTACT, true)
-                    })
-                }
             }
 
         override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -87,6 +83,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
 
     override fun onCreateContextMenu(
         menu: ContextMenu?,
@@ -118,7 +115,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterForContextMenu(amb.contactsLv)
+    }
+
+    override fun onContactClick(position: Int) {
+        Intent(this, ContactActivity::class.java).apply {
+            putExtra(EXTRA_CONTACT, contactList[position])
+            putExtra(EXTRA_VIEW_CONTACT, true)
+        }.also{
+            startActivity(it)
+        }
     }
 
         private fun fillContacts() {
